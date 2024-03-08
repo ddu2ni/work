@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>파일 업로드</title>
+
+    <script type="text/javascript">
+      let count = 1;
+
+      function addItem() {
+        if (count <= 5) {
+          const newItemE = document.createElement("div");
+
+          const html = '파일: <input type="file" name="upload"/><br/>';
+
+          newItemE.innerHTML = html;
+
+          const itemListDiv = document.getElementById("itemList");
+          itemListDiv.appendChild(newItemE);
+        } else {
+          alert("파일은 5개까지만 업로드 할 수 있습니다.");
+        }
+
+        count++;
+      }
+    </script>
+  </head>
+  <body>
+    <h1>파일 업로드</h1>
+    <br />
+    <form action="/process/file" method="post" enctype="multipart/form-data">
+      <table>
+        <tr>
+          <input type="button" value="파일 추가" onclick="addItem();" />
+          <div id="itemList"></div>
+        </tr>
+      </table>
+      <input type="submit" value="업로드" />
+    </form>
+  </body>
+</html>
+<!--함수실행될때마다 여기에 추가가 될 것임-->
