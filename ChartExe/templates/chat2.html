@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.socket.io/4.7.4/socket.io.js"></script>
+    <script type="text/javascript">
+        
+        let host;
+        let port;
+        let socket;
+
+        $(function(){
+            $('#connectBtn').bind('click',function(event){
+
+                host = $('#host').val()
+                port = $('#port').val()
+
+                connectToServer()
+            })
+
+            //메세지를 보내는 함수
+            $('#sendBtn').bind('click',function(event){
+            
+            let sender = $('#senderId').val()
+            let receiver = $('#receiverId').val()
+            let msg = $('#msg').val()
+
+            //보내기위한 데이터
+            //{sender:    } - 보내는 사람 = message 이벤트 객체(사용자 정의)
+            let output = {sender:sender,receiver:receiver,command:'chat',type:'text',data:msg}
+            
+            //소켓이 연결되어있지 않다면
+            if(socket==undefined){
+                alert('서버에 연결되어있지 않습니다.')
+                return
+            }
+
+            //소켓이 연결되어있다면
+            //메세지 보내는 작업 (메세지를 보내면서 event(emit메서드)를 호출할거임)
+            socket.emit('message',output)
+
+        })
+
+        })
+
+
+        //서버에 연결하는 함수
+        //소켓 객체 만들고 -> 연결이 되면 -> 서버 연결완
+        function connectToServer(){
+
+            let options = {'forceNew':true} //연결세션을 만듦
+            let url = 'http://' + host + ':' + port
+
+            socket = io.connect(url,options)
+
+            socket.on('connect',function(){
+                printMsg('웹소켓 서버에 연결되었습니다: ' + url)
+
+                socket.on('message',function(message){
+                    printMsg('수신 메세지: ' + message.sender + ', ' + message.receiver + ', ' 
+                    + message.command + ', ' + message.data)
+            })
+        })
+            socket.on('disconnect',function(){
+                printMsg('웹소켓 연결이 종료되었습니다: ' + url)
+            })
+        }
+
+        function printMsg(msg){
+        $('#result').append('<p>' + msg + '</p>')
+        }
+
+
+    </script>
+
+</head>
+<body>
+    <h3>채팅 클라이언트 - 2 :  Echo 테스트</h3>
+    <br/>
+    <div>
+        <input type="text" id="host" value="192.168.16.16"/>
+        <input type="text" id="port" value="3000"/>
+
+        <input type="button" id="connectBtn" value="연결하기"/>
+    </div>
+
+<div>
+    <div>
+        <span>보내는 사람 아이디</span>
+        <input type="text" id="senderId"/>
+    </div>
+    <div>
+        <span>받는 사람 아이디</span>
+        <input type="text" id="receiverId" value="ALL"/>
+    </div>
+    <div>
+        <span>메세지 데이터</span>
+        <input type="text" id="msg"/>
+    </div>
+    <br/>
+    <input type="button" id="sendBtn" value="전송"/>
+</div>
+
+<hr/>
+<p>결과 : </p>
+<div id="result"></div>
+
+</body>
+</html>

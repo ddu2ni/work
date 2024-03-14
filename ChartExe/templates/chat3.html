@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="http://cdn.socket.io/4.7.4/socket.io.js"></script>
+    <script type="text/javascript">
+      let host;
+      let port;
+      let socket;
+
+      $(function () {
+        $("#connectBtn").bind("click", function (event) {
+          host = $("#host").val();
+          port = $("#port").val();
+
+          connectToServer();
+        });
+
+        //메세지를 보내는 함수
+        $("#sendBtn").bind("click", function (event) {
+          const sender = $("#senderId").val();
+          const receiver = $("#receiverId").val();
+          const msg = $("#msg").val();
+
+          const output = { sender: sender, receiver: receiver, command: "chat", type: "text", data: msg };
+
+          if (socket == undefined) {
+            alert("서버에 연결되어 있지 않습니다.");
+            return;
+          }
+
+          socket.emit("message", output); //메세지 보내기
+        });
+
+        //로그인 버튼 처리
+        $("#loginBtn").bind("click", function (event) {
+          const id = $("#id").val();
+          const pwd = $("#pwd").val();
+          const alias = $("#alias").val();
+          const today = $("#today").val();
+
+          $("#senderId").val(id);
+          const output = { id: id, pwd: pwd, alias: alias, today: today };
+
+          if (socket == undefined) {
+            alert("서버에 연결되어 있지 않습니다.");
+            return;
+          }
+
+          socket.emit("login", output); //app2.js로 넘김
+        });
+
+        //로그아웃 버튼 처리
+        $("#logoutBtn").bind("click", function (event) {
+          if (socket == undefined) {
+            alert("서버에 연결되어 있지 않습니다.");
+            return;
+          }
+
+          const id = $("#id").val();
+
+          const output = { id: id };
+          socket.emit("logout", output);
+
+          $("#id").val("");
+          $("#pwd").val("");
+          $("#alias").val("");
+          $("#today").val("");
+        });
+      });
+
+      //서버에 연결하는 함수
+      function connectToServer() {
+
+        host = $("#host").val();
+        port = $("#port").val();
+
+        const options = { forceNew: true }; //연결세션을 만듬
+        const url = "http://" + host + ":" + port;
+        socket = io.connect(url, options);
+        socket.on("connect", function () {
+          printMsg("웹소켓 서버에 연결 되었습니다." + url);
+          socket.on("message", function (message) {
+            printMsg("수신 메세지: " + message.sender + ", " + message.receiver + ", " + message.command + ", " + message.data);
+          });
+
+          socket.on("response", function (response) {
+            printMsg("로그인 응답 메세지: " + response.command + ", " + response.code + ", " + response.message);
+
+            //로그아웃
+            if (response.code == 444) {
+              socket.close();
+            }
+          });
+        });
+        socket.on("disconnect", function () {
+          printMsg("웹소켓 연결이 종료 되었습니다.");
+        });
+      }
+
+      function printMsg(msg) {
+        $("#result").append("<p>" + msg + "</p>");
+      }
+    </script>
+  </head>
+  <body onload="connectToServer()">
+    <h3>채팅 클라이언트 - 3: 1:1 채팅</h3>
+    <br />
+    <div>
+      <input type="text" id="host" value="192.168.16.16" />
+      <input type="text" id="port" value="3000" />
+
+      <input type="button" id="connectBtn" value="연결하기" />
+    </div>
+
+    <br />
+    <div>
+      아이디: <input type="text" id="id" /><br />
+      패스워드: <input type="text" id="pwd" /><br />
+      별명: <input type="text" id="alias" /><br />
+      상태: <input type="text" id="today" /><br />
+      <input type="button" id="loginBtn" value="로그인" />
+      <input type="button" id="logoutBtn" value="로그아웃" /><br />
+    </div>
+    <br />
+
+    <div>
+      <div>
+        <span>보내는 사람 id:</span>
+        <input type="text" id="senderId" />
+      </div>
+      <div>
+        <span>받는 사람 id:</span>
+        <input type="text" id="receiverId" value="ALL" />
+      </div>
+      <div>
+        <span>메세지 데이터</span>
+        <input type="text" id="msg" />
+      </div>
+      <br />
+      <input type="button" id="sendBtn" value="전송" />
+    </div>
+    <hr />
+    <p>결과 :</p>
+    <div id="result"></div>
+  </body>
+</html>
